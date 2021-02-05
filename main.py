@@ -18,6 +18,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         super().__init__()
         self.filename = ""
         self.get_cur_dir = os.getcwd()
+        self.saved = False
+        self.last_text = ""
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -45,6 +47,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         MainWindow.setStatusBar(self.statusbar)
         self.actionNew = QtWidgets.QAction(MainWindow)
         self.actionNew.setObjectName("actionNew")
+        self.actionOpen = QtWidgets.QAction(MainWindow)
+        self.actionOpen.setObjectName("actionOpen")
         self.actionSave = QtWidgets.QAction(MainWindow)
         self.actionSave.setObjectName("actionSave")
         self.actionClose = QtWidgets.QAction(MainWindow)
@@ -53,6 +57,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.actionAbout.setObjectName("actionAbout")
         self.menuAbout.addAction(self.actionAbout)
         self.menuFile.addAction(self.actionNew)
+        self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionSave)
         self.menuFile.addAction(self.actionClose)
         self.menubar.addAction(self.menuFile.menuAction())
@@ -62,16 +67,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.actionNew.triggered.connect(self.new_file)
-        self.actionSave.triggered.connect(self.save_file)
+        self.actionSave.triggered.connect(self.save)
         self.actionClose.triggered.connect(self.close_file)
         self.actionAbout.triggered.connect(self.about)
+        self.actionOpen.triggered.connect(self.open)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Calc 21"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Note 21"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuAbout.setTitle(_translate("MainWindow", "About"))
         self.actionNew.setText(_translate("MainWindow", "New"))
+        self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionClose.setText(_translate("MainWindow", "Close"))
         self.actionAbout.setText(_translate("MainWindow", "About"))
@@ -101,9 +108,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.save()
 
 
+    def close_dialog_button(self, i):
+        if i.text() == "&Yes":
+            self.save()
+        elif i.text() == "&No":
+            sys.exit(app.exec_())
+
+
     def save_file(self):
         fname = QtWidgets.QMessageBox()
         fname.setWindowTitle("Save File")
+        fname.setText("Do you want to save your data before closing?")
         fname.setIcon(QtWidgets.QMessageBox.Warning)
         fname.setStandardButtons(QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No|QtWidgets.QMessageBox.Cancel)
         fname.buttonClicked.connect(self.save_dialog_button)
@@ -116,9 +131,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.filename = save
             with open(f"{self.filename}.txt", 'w') as f:
                 f.write(self.MainTextFrame.toPlainText())
+                self.saved = True
+                self.last_text = self.MainTextFrame.toPlainText()
 
 
     def close_file(self):
+        if self.last_text != self.MainTextFrame.toPlainText() and not self.saved:
+            save = QtWidgets.QMessageBox()
+            save.setWindowTitle("Save File")
+            save.setText("Do you want to save your data before closing?")
+            save.setIcon(QtWidgets.QMessageBox.Critical)
+            save.setStandardButtons(QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No|QtWidgets.QMessageBox.Cancel)
+            save.buttonClicked.connect(self.close_dialog_button)
+            save.exec_()
         sys.exit(app.exec_())
 
 
@@ -128,6 +153,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
         about_menu.setText("Note 21: A text editor coded in Python by Ishfaq Wardag.\nGitHub: Ish222")
         about_menu.setIcon(QtWidgets.QMessageBox.Information)
         about_menu.exec_()
+
+
+    def open(self):
+        file_name, name = QtWidgets.QInputDialog.getText(self, "Open File", "Enter the full path of the text file: ")
+        print(file_name[-4:])
+        print(os.path.exists(file_name))
+        print(os.getcwd())
+        if file_name and name and os.path.exists(file_name):
+            if file_name[-4:] != ".txt":
+                wrong_path = QtWidgets.QMessageBox()
+                wrong_path.setWindowTitle("Incorrect Path")
+                wrong_path.setText("Incorrect path (don't forget the .txt at the end of the path!)")
+                wrong_path.setIcon(QtWidgets.QMessageBox.Critical)
+                wrong_path.exec_()
+            with open(file_name, 'r') as f:
+                data = f.read()
+                self.MainTextFrame.insertPlainText(data)
 
 
 if __name__ == "__main__":
