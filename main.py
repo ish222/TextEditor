@@ -157,14 +157,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def open(self):
         file_name, name = QtWidgets.QInputDialog.getText(self, "Open File", "Enter the full path of the text file: ")
-        print(file_name[-4:])
         print(os.path.exists(file_name))
         print(os.getcwd())
         if file_name and name and os.path.exists(file_name):
-            if file_name[-4:] != ".txt":
+            if file_name[-4:] == ".txt":
                 wrong_path = QtWidgets.QMessageBox()
                 wrong_path.setWindowTitle("Incorrect Path")
-                wrong_path.setText("Incorrect path (don't forget the .txt at the end of the path!)")
+                wrong_path.setText("Incorrect path (remove the .txt at the end of the path!)")
                 wrong_path.setIcon(QtWidgets.QMessageBox.Critical)
                 wrong_path.exec_()
             with open(file_name, 'r') as f:
